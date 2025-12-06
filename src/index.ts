@@ -32,8 +32,8 @@ function run() {
     // 2. Daily Average Temps
     const dates = Object.keys(result.dailyStats).sort();
     
-    let totalTimeBelowZero = 0;
-    let maxTimeBelowZero = 0;
+    let totalTimeBelowZeroMs = 0;
+    let maxTimeBelowZeroMs = 0;
 
     for (const date of dates) {
         const stats = result.dailyStats[date];
@@ -43,20 +43,24 @@ function run() {
         rows.push(`Daily Average Temp,${date},${dailyAvg.toFixed(2)}`);
 
         // Accumulate for other stats
-        totalTimeBelowZero += stats.timeBelowThresholdMs;
-        if (stats.timeBelowThresholdMs > maxTimeBelowZero) {
-            maxTimeBelowZero = stats.timeBelowThresholdMs;
+        totalTimeBelowZeroMs += stats.timeBelowThresholdMs;
+        if (stats.timeBelowThresholdMs > maxTimeBelowZeroMs) {
+            maxTimeBelowZeroMs = stats.timeBelowThresholdMs;
         }
     }
 
     const numberOfDays = dates.length;
-    const avgTimeBelowZero = numberOfDays > 0 ? totalTimeBelowZero / numberOfDays : 0;
+    const avgTimeBelowZeroMs = numberOfDays > 0 ? totalTimeBelowZeroMs / numberOfDays : 0;
 
-    // 3. Average time spent under 0 degrees daily
-    rows.push(`Average time spent under ${ZERO_THRESHOLD} degrees daily,,${avgTimeBelowZero.toFixed(0)}`);
+    // Convert to Minutes
+    const avgTimeBelowZeroMin = avgTimeBelowZeroMs / 60000;
+    const maxTimeBelowZeroMin = maxTimeBelowZeroMs / 60000;
 
-    // 4. Maximum time over the provided period spent under 0 degrees
-    rows.push(`Maximum time over the provided period spent under ${ZERO_THRESHOLD} degrees,,${maxTimeBelowZero.toFixed(0)}`);
+    // 3. Average time spent under 0 degrees daily (minutes)
+    rows.push(`Average time spent under ${ZERO_THRESHOLD} degrees daily (minutes),,${avgTimeBelowZeroMin.toFixed(2)}`);
+
+    // 4. Maximum time over the provided period spent under 0 degrees (minutes)
+    rows.push(`Maximum time over the provided period spent under ${ZERO_THRESHOLD} degrees (minutes),,${maxTimeBelowZeroMin.toFixed(2)}`);
 
     // Use CRLF for better Excel compatibility and prepend BOM
     const csvContent = '\uFEFF' + rows.join('\r\n');
