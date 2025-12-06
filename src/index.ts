@@ -1,25 +1,29 @@
 import fs from 'fs';
 import path from 'path';
-import { Analyzer, ZERO_THRESHOLD } from './analyzer';
+import { Analyzer, DailyStats, ZERO_THRESHOLD } from './analyzer';
 
 function run() {
-  const args = process.argv.slice(2);
-  const filePath = args[0];
+  const filePaths = process.argv.slice(2);
 
-  if (!filePath) {
-    console.error('Please provide a file path');
+  if (filePaths.length === 0) {
+    console.error('Please provide at least one file path');
     process.exit(1);
   }
 
   try {
-    const absolutePath = path.resolve(filePath);
-    if (!fs.existsSync(absolutePath)) {
-      console.error(`File not found: ${absolutePath}`);
-      process.exit(1);
+    const fileContents: string[] = [];
+
+    for (const filePath of filePaths) {
+        const absolutePath = path.resolve(filePath);
+        if (!fs.existsSync(absolutePath)) {
+          console.error(`File not found: ${absolutePath}`);
+          process.exit(1);
+        }
+        const content = fs.readFileSync(absolutePath, 'utf-8');
+        fileContents.push(content);
     }
 
-    const content = fs.readFileSync(absolutePath, 'utf-8');
-    const analyzer = new Analyzer(content);
+    const analyzer = new Analyzer(fileContents);
     const result = analyzer.analyze();
 
     // Generate CSV Output

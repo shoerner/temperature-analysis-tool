@@ -26,11 +26,23 @@ export interface AnalysisResult {
 export class Analyzer {
   private data: DataPoint[] = [];
 
-  constructor(csvContent: string) {
-    this.parseCSV(csvContent);
+  constructor(csvContents: string[]) {
+    this.parseCSVs(csvContents);
   }
 
-  private parseCSV(content: string) {
+  private parseCSVs(contents: string[]) {
+    const dataMap = new Map<number, DataPoint>();
+
+    for (const content of contents) {
+      this.parseSingleCSV(content, dataMap);
+    }
+
+    // Convert Map back to array and sort
+    this.data = Array.from(dataMap.values());
+    this.data.sort((a, b) => a.last_changed.valueOf() - b.last_changed.valueOf());
+  }
+
+  private parseSingleCSV(content: string, dataMap: Map<number, DataPoint>) {
     const lines = content.trim().split('\n');
     if (lines.length === 0) return;
 
@@ -40,13 +52,7 @@ export class Analyzer {
     const stateIndex = headers.indexOf('state');
     const lastChangedIndex = headers.indexOf('last_changed');
 
-    // Basic validation
     if (stateIndex === -1 || lastChangedIndex === -1) {
-      // Fallback logic? Or strict error? 
-      // Given the user issue, we should probably just fail or try to guess.
-      // But if headers are missing entirely (no header row), we can't reliably guess without heuristics.
-      // Let's assume headers are present but maybe mixed case. I used toLowerCase().
-      // If parsing fails, we might want to throw to let the user know.
       throw new Error('CSV must contain "state" and "last_changed" columns in the header.');
     }
 
@@ -61,15 +67,13 @@ export class Analyzer {
       if (!stateStr || !dateStr) continue;
 
       const state = parseFloat(stateStr);
-      const last_changed = dayjs.utc(dateStr); // Input is UTC
+      const last_changed = dayjs.utc(dateStr); 
 
       if (!isNaN(state) && last_changed.isValid()) {
-        this.data.push({ state, last_changed });
+        // Deduplicate by timestamp (valueOf())
+        dataMap.set(last_changed.valueOf(), { state, last_changed });
       }
     }
-
-    // Sort by time just in case
-    this.data.sort((a, b) => a.last_changed.valueOf() - b.last_changed.valueOf());
   }
 
   public analyze(): AnalysisResult {
