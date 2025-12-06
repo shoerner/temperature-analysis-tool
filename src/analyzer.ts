@@ -32,14 +32,34 @@ export class Analyzer {
 
   private parseCSV(content: string) {
     const lines = content.trim().split('\n');
-    // Assume header exists and skip it
-    const startIdx = lines[0].startsWith('state') ? 1 : 0;
+    if (lines.length === 0) return;
 
-    for (let i = startIdx; i < lines.length; i++) {
+    const headerLine = lines[0].toLowerCase();
+    const headers = headerLine.split(',').map(h => h.trim());
+
+    const stateIndex = headers.indexOf('state');
+    const lastChangedIndex = headers.indexOf('last_changed');
+
+    // Basic validation
+    if (stateIndex === -1 || lastChangedIndex === -1) {
+      // Fallback logic? Or strict error? 
+      // Given the user issue, we should probably just fail or try to guess.
+      // But if headers are missing entirely (no header row), we can't reliably guess without heuristics.
+      // Let's assume headers are present but maybe mixed case. I used toLowerCase().
+      // If parsing fails, we might want to throw to let the user know.
+      throw new Error('CSV must contain "state" and "last_changed" columns in the header.');
+    }
+
+    for (let i = 1; i < lines.length; i++) {
       const line = lines[i].trim();
       if (!line) continue;
-      const [stateStr, dateStr] = line.split(',');
+      const columns = line.split(',');
       
+      const stateStr = columns[stateIndex]?.trim();
+      const dateStr = columns[lastChangedIndex]?.trim();
+      
+      if (!stateStr || !dateStr) continue;
+
       const state = parseFloat(stateStr);
       const last_changed = dayjs.utc(dateStr); // Input is UTC
 

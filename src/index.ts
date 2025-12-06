@@ -32,12 +32,6 @@ function run() {
     // 2. Daily Average Temps
     const dates = Object.keys(result.dailyStats).sort();
     
-    // We also need to calculate "Average time spent under 0 degrees daily"
-    // This is: Sum of all daily durations < 0 / Number of days recorded
-    // Note: Should we count days where time < 0 is 0? Yes, if the day is in the dataset.
-    // The prompt says "Average time spent under 0 degrees Fahrenheit ... daily".
-    // This usually implies average per day.
-    
     let totalTimeBelowZero = 0;
     let maxTimeBelowZero = 0;
 
@@ -64,7 +58,12 @@ function run() {
     // 4. Maximum time over the provided period spent under 0 degrees
     rows.push(`Maximum time over the provided period spent under ${ZERO_THRESHOLD} degrees,,${maxTimeBelowZero.toFixed(0)}`);
 
-    console.log(rows.join('\n'));
+    // Use CRLF for better Excel compatibility and prepend BOM
+    const csvContent = '\uFEFF' + rows.join('\r\n');
+    
+    const outputPath = path.join('output', `${(new Date()).toISOString().replace(/:/g, '')}.csv`);
+    fs.writeFileSync(outputPath, csvContent, 'utf-8');
+    console.log(`Analysis complete. Output written to ${outputPath}`);
 
   } catch (error) {
     console.error('Error processing file:', error);
