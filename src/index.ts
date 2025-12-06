@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { Analyzer, DailyStats, ZERO_THRESHOLD } from './analyzer';
+import { Analyzer, ZERO_THRESHOLD } from './analyzer';
 
 function run() {
   const args = process.argv.slice(2);
