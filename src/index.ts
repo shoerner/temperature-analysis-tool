@@ -28,10 +28,10 @@ function run() {
 
     // Generate CSV Output
     const rows: string[] = [];
-    rows.push('Metric,Date,Value');
+    rows.push(`Metric,Date,Value,Time Below ${ZERO_THRESHOLD} (min),Time Below ${ZERO_THRESHOLD} (%),Time Above ${ZERO_THRESHOLD} (min),Time Above ${ZERO_THRESHOLD} (%)`);
 
     // 1. Overall Average Temp
-    rows.push(`Overall Average Temp,,${result.overallAverageTemp.toFixed(2)}`);
+    rows.push(`Overall Average Temp,,${result.overallAverageTemp.toFixed(2)},,,,`);
 
     // 2. Daily Average Temps
     const dates = Object.keys(result.dailyStats).sort();
@@ -44,7 +44,13 @@ function run() {
         
         // Daily Average Temp
         const dailyAvg = stats.totalDurationMs > 0 ? stats.weightedTempSum / stats.totalDurationMs : 0;
-        rows.push(`Daily Average Temp,${date},${dailyAvg.toFixed(2)}`);
+        const timeBelowMin = stats.timeBelowThresholdMs / 60000;
+        const timeAboveMin = (stats.totalDurationMs - stats.timeBelowThresholdMs) / 60000;
+
+        const percentBelow = Math.round((timeBelowMin / 1440) * 100);
+        const percentAbove = Math.round((timeAboveMin / 1440) * 100);
+
+        rows.push(`Daily Average Temp,${date},${dailyAvg.toFixed(2)},${timeBelowMin.toFixed(2)},${percentBelow}%,${timeAboveMin.toFixed(2)},${percentAbove}%`);
 
         // Accumulate for other stats
         totalTimeBelowZeroMs += stats.timeBelowThresholdMs;
@@ -61,10 +67,10 @@ function run() {
     const maxTimeBelowZeroMin = maxTimeBelowZeroMs / 60000;
 
     // 3. Average time spent under 0 degrees daily (minutes)
-    rows.push(`Average time spent under ${ZERO_THRESHOLD} degrees daily (minutes),,${avgTimeBelowZeroMin.toFixed(2)}`);
+    rows.push(`Average time spent under ${ZERO_THRESHOLD} degrees daily (minutes),,${avgTimeBelowZeroMin.toFixed(2)},,,,`);
 
     // 4. Maximum time over the provided period spent under 0 degrees (minutes)
-    rows.push(`Maximum time over the provided period spent under ${ZERO_THRESHOLD} degrees (minutes),,${maxTimeBelowZeroMin.toFixed(2)}`);
+    rows.push(`Maximum time over the provided period spent under ${ZERO_THRESHOLD} degrees (minutes),,${maxTimeBelowZeroMin.toFixed(2)},,,,`);
 
     // Use CRLF for better Excel compatibility and prepend BOM
     const csvContent = '\uFEFF' + rows.join('\r\n');
