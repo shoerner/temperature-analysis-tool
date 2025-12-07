@@ -125,7 +125,7 @@ export class Analyzer {
           dailyStats[dayKey].totalDurationMs += segmentDuration;
           dailyStats[dayKey].weightedTempSum += (segmentDuration * temp);
           
-          if (temp < ZERO_THRESHOLD) {
+          if (temp <= ZERO_THRESHOLD) {
             dailyStats[dayKey].timeBelowThresholdMs += segmentDuration;
           }
         }
